@@ -1,0 +1,268 @@
+{% extends "layout_app.html" %}
+{% block title %}Dịch vụ - SMM Panel{% endblock %}
+{% block page_pretitle %}Quản trị{% endblock %}
+{% block page_title %}Dịch vụ{% endblock %}
+
+{% block page_content %}
+
+{% if error %}
+<div class="form-alert">{{ error }}</div>
+{% endif %}
+{% if info %}
+<div class="form-alert success">{{ info }}</div>
+{% endif %}
+
+<div class="row col-4" style="margin-bottom:16px">
+  <div class="card">
+    <div class="stat">
+      <div class="stat-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Tổng dịch vụ</div>
+        <div class="stat-value-row"><span class="stat-value">{{ stats.total }}</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="stat">
+      <div class="stat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l3 3 7-7"/></svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Đang bán</div>
+        <div class="stat-value-row"><span class="stat-value">{{ stats.active }}</span></div>
+      </div>
+    </div>
+  </div>
+  {% for platform_name, count in stats.by_platform[:2] %}
+  <div class="card">
+    <div class="card-body">
+      <div class="stat-label">{{ platform_name }}</div>
+      <div class="stat-value" style="margin-top:6px">{{ count }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">Đồng bộ dịch vụ từ provider</div>
+  <div class="card-body">
+    <form method="post" action="/admin/services/sync" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
+      <select name="provider_id" class="form-control" style="width:280px" required>
+        <option value="">Chọn provider…</option>
+        {% for p in providers %}
+        <option value="{{ p.id }}">{{ p.name }} (markup {{ p.markup_percent|round(1) }}%){% if not p.is_active %} — đang khóa{% endif %}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary">Đồng bộ ngay</button>
+      {% if not providers %}
+      <span style="font-size:12.5px;color:var(--text-muted)">Chưa có provider nào — thêm ở mục Nhà cung cấp trước.</span>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header" style="flex-wrap:wrap">
+    <form method="get" action="/admin/services" style="display:flex;gap:10px;flex-wrap:wrap;width:100%">
+      <div class="search-box" style="width:220px">
+        <svg class="s-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+        <input type="text" name="q" value="{{ q }}" placeholder="Tìm tên dịch vụ…" aria-label="Tìm kiếm">
+      </div>
+      <select class="form-control" name="platform" style="width:160px;height:32px" onchange="this.form.submit()">
+        <option value="">Tất cả platform</option>
+        {% for p in platforms %}
+        <option value="{{ p.id }}"{% if platform_id == p.id|string %} selected{% endif %}>{{ p.name }}</option>
+        {% endfor %}
+      </select>
+      {% if categories %}
+      <select class="form-control" name="category" style="width:160px;height:32px" onchange="this.form.submit()">
+        <option value="">Tất cả category</option>
+        {% for c in categories %}
+        <option value="{{ c.id }}"{% if category_id == c.id|string %} selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
+      <select class="form-control" name="provider" style="width:180px;height:32px" onchange="this.form.submit()">
+        <option value="">Tất cả provider</option>
+        {% for p in providers %}
+        <option value="{{ p.id }}"{% if provider_id == p.id|string %} selected{% endif %}>{{ p.name }}</option>
+        {% endfor %}
+      </select>
+      <select class="form-control" name="status" style="width:150px;height:32px" onchange="this.form.submit()">
+        <option value="">Tất cả trạng thái</option>
+        <option value="active"{% if status_filter == "active" %} selected{% endif %}>Đang bán</option>
+        <option value="inactive"{% if status_filter == "inactive" %} selected{% endif %}>Chưa bán</option>
+      </select>
+      <button type="submit" class="btn btn-outline">Lọc</button>
+      {% if q or platform_id or category_id or provider_id or status_filter %}
+      <a href="/admin/services" class="btn btn-outline">Xóa lọc</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<form method="post" action="/admin/services/bulk" id="bulk-form">
+<input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">Chỉnh sửa hàng loạt <span id="selected-count" style="font-weight:400;color:var(--text-muted);margin-left:8px">Chưa chọn dịch vụ nào</span></div>
+  <div class="card-body">
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" name="markup_percent" class="form-control" style="width:110px" min="0" max="1000" step="0.1" placeholder="%">
+        <button type="submit" name="action" value="markup" class="btn btn-outline">Áp dụng markup %</button>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <select name="status_value" class="form-control" style="width:150px">
+          <option value="active">Đang bán</option>
+          <option value="inactive">Chưa bán</option>
+        </select>
+        <button type="submit" name="action" value="status" class="btn btn-outline">Áp dụng trạng thái</button>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <select name="platform_id" id="bulk-platform" class="form-control" style="width:140px">
+          {% for p in platforms %}
+          <option value="{{ p.id }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+        <select name="category_id" id="bulk-category" class="form-control" style="width:140px">
+          {% for c in all_categories %}
+          <option value="{{ c.id }}" data-platform-id="{{ c.platform_id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" name="action" value="category" class="btn btn-outline">Áp dụng danh mục</button>
+      </div>
+
+    </div>
+    <div style="font-size:11.5px;color:var(--text-muted);margin-top:10px">
+      Áp dụng markup hoặc đổi danh mục thủ công sẽ khóa dịch vụ đó khỏi việc tự động cập nhật ở lần đồng bộ sau.
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:36px"><input type="checkbox" id="check-all" aria-label="Chọn tất cả"></th>
+            <th>Dịch vụ</th>
+            <th>Platform / Category</th>
+            <th>Giá nhập</th>
+            <th>Giá bán</th>
+            <th>Min / Max</th>
+            <th>Trạng thái</th>
+            <th data-orderable="false"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in items %}
+          <tr>
+            <td><input type="checkbox" name="service_ids" value="{{ s.id }}" class="row-checkbox"></td>
+            <td style="max-width:320px">
+              <div class="cell-strong">{{ s.name }}</div>
+              <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                #{{ s.provider_service_ref }} — {{ s.raw_provider_name }}
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-blue">{{ s.platform.name if s.platform else "Khác" }}</span>
+              <span class="badge badge-teal">{{ s.category.name if s.category else "Khác" }}</span>
+            </td>
+            <td>{{ "{:,.2f}".format(s.provider_rate) }}</td>
+            <td>
+              {{ "{:,.0f}".format(s.sell_price) }} đ
+              {% if s.price_locked %}<span title="Giá đã khóa, không tự cập nhật khi đồng bộ" style="color:var(--yellow)">🔒</span>{% endif %}
+            </td>
+            <td style="font-size:12px;color:var(--text-muted)">{{ s.min_quantity }} / {{ s.max_quantity }}</td>
+            <td>
+              {% if s.is_active %}
+              <span class="status status-green">Đang bán</span>
+              {% else %}
+              <span class="status status-red">Chưa bán</span>
+              {% endif %}
+            </td>
+            <td style="white-space:nowrap">
+              <a href="/admin/services/{{ s.id }}/edit" class="btn btn-outline" style="padding:4px 10px;font-size:12.5px">Sửa</a>
+              <button type="submit" formaction="/admin/services/{{ s.id }}/toggle-active" class="btn btn-outline" style="padding:4px 10px;font-size:12.5px">
+                {{ "Ẩn" if s.is_active else "Kích hoạt" }}
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align:center;color:var(--text-muted);padding:24px">
+              Chưa có dịch vụ nào. Đồng bộ từ provider ở phía trên để bắt đầu.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card-header" style="justify-content:space-between">
+    <span style="font-size:12.5px;color:var(--text-muted)">Tổng {{ total }} dịch vụ</span>
+    <div style="display:flex;gap:6px">
+      {% if page > 1 %}
+      <a class="btn btn-outline" style="padding:4px 10px;font-size:12.5px" href="/admin/services?q={{ q }}&platform={{ platform_id }}&category={{ category_id }}&provider={{ provider_id }}&status={{ status_filter }}&page={{ page - 1 }}">« Trước</a>
+      {% endif %}
+      <span style="font-size:12.5px;color:var(--text-muted);padding:4px 8px">Trang {{ page }} / {{ total_pages }}</span>
+      {% if page < total_pages %}
+      <a class="btn btn-outline" style="padding:4px 10px;font-size:12.5px" href="/admin/services?q={{ q }}&platform={{ platform_id }}&category={{ category_id }}&provider={{ provider_id }}&status={{ status_filter }}&page={{ page + 1 }}">Sau »</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+</form>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    var checkAll = document.getElementById("check-all");
+    var rowChecks = function () { return Array.prototype.slice.call(document.querySelectorAll(".row-checkbox")); };
+    var counter = document.getElementById("selected-count");
+
+    function updateCounter() {
+      var checked = rowChecks().filter(function (c) { return c.checked; }).length;
+      counter.textContent = checked > 0 ? ("Đã chọn " + checked + " dịch vụ") : "Chưa chọn dịch vụ nào";
+    }
+
+    if (checkAll) {
+      checkAll.addEventListener("change", function () {
+        rowChecks().forEach(function (c) { c.checked = checkAll.checked; });
+        updateCounter();
+      });
+    }
+    rowChecks().forEach(function (c) { c.addEventListener("change", updateCounter); });
+    updateCounter();
+
+    var platformSelect = document.getElementById("bulk-platform");
+    var categorySelect = document.getElementById("bulk-category");
+    if (platformSelect && categorySelect) {
+      var allOptions = Array.prototype.slice.call(categorySelect.options);
+      function filterCategories() {
+        var pid = platformSelect.value;
+        allOptions.forEach(function (opt) { opt.hidden = opt.dataset.platformId !== pid; });
+        var current = categorySelect.selectedOptions[0];
+        if (!current || current.hidden) {
+          var first = allOptions.filter(function (opt) { return !opt.hidden; })[0];
+          if (first) categorySelect.value = first.value;
+        }
+      }
+      platformSelect.addEventListener("change", filterCategories);
+      filterCategories();
+    }
+  })();
+</script>
+{% endblock %}

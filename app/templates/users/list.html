@@ -1,0 +1,111 @@
+{% extends "layout_app.html" %}
+{% block title %}Người dùng - SMM Panel{% endblock %}
+{% block page_pretitle %}Quản trị{% endblock %}
+{% block page_title %}Người dùng{% endblock %}
+{% block page_actions %}
+<a href="/admin/users/new" class="btn btn-primary">+ Thêm người dùng</a>
+{% endblock %}
+
+{% block page_content %}
+
+{% if error %}
+<div class="form-alert">{{ error }}</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header" style="gap:12px;flex-wrap:wrap">
+    <form method="get" action="/admin/users" style="display:flex;gap:10px;flex-wrap:wrap;width:100%">
+      <div class="search-box" style="width:260px">
+        <svg class="s-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+        <input type="text" name="q" value="{{ q }}" placeholder="Tìm theo tên đăng nhập hoặc email…" aria-label="Tìm kiếm">
+      </div>
+      <select class="form-control" name="role" style="width:150px;height:32px" aria-label="Lọc theo vai trò" onchange="this.form.submit()">
+        <option value="">Tất cả vai trò</option>
+        {% for r in roles %}
+        <option value="{{ r.value }}"{% if role == r.value %} selected{% endif %}>{{ r.value }}</option>
+        {% endfor %}
+      </select>
+      <select class="form-control" name="status" style="width:150px;height:32px" aria-label="Lọc theo trạng thái" onchange="this.form.submit()">
+        <option value="">Tất cả trạng thái</option>
+        <option value="active"{% if status_filter == "active" %} selected{% endif %}>Hoạt động</option>
+        <option value="inactive"{% if status_filter == "inactive" %} selected{% endif %}>Vô hiệu hóa</option>
+      </select>
+      <button type="submit" class="btn btn-outline">Lọc</button>
+      {% if q or role or status_filter %}
+      <a href="/admin/users" class="btn btn-outline">Xóa lọc</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Người dùng</th>
+            <th>Vai trò</th>
+            <th>Trạng thái</th>
+            <th>Số dư</th>
+            <th>Ngày tạo</th>
+            <th data-orderable="false"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in items %}
+          <tr>
+            <td>
+              <div class="cell-customer">
+                <div class="cell-avatar" style="background:var(--primary);color:white">{{ u.username[0]|upper }}</div>
+                <div>
+                  <div class="cell-strong">{{ u.username }}</div>
+                  <div style="font-size:11.5px;color:var(--text-muted)">{{ u.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge badge-blue">{{ u.role.value }}</span></td>
+            <td>
+              {% if u.is_active %}
+              <span class="status status-green">Hoạt động</span>
+              {% else %}
+              <span class="status status-red">Vô hiệu hóa</span>
+              {% endif %}
+            </td>
+            <td>{{ "{:,.0f}".format(u.balance) }} đ</td>
+            <td style="font-size:12.5px;color:var(--text-muted)">{{ u.created_at.strftime("%d/%m/%Y") }}</td>
+            <td style="white-space:nowrap">
+              <a href="/admin/users/{{ u.id }}/edit" class="btn btn-outline" style="padding:4px 10px;font-size:12.5px">Sửa</a>
+              {% if u.id != user.id %}
+              <form method="post" action="/admin/users/{{ u.id }}/toggle-active" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
+                <button type="submit" class="btn btn-outline" style="padding:4px 10px;font-size:12.5px">
+                  {{ "Khóa" if u.is_active else "Mở khóa" }}
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">Không tìm thấy người dùng nào.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card-header" style="justify-content:space-between">
+    <span style="font-size:12.5px;color:var(--text-muted)">Tổng {{ total }} người dùng</span>
+    <div style="display:flex;gap:6px">
+      {% if page > 1 %}
+      <a class="btn btn-outline" style="padding:4px 10px;font-size:12.5px" href="/admin/users?q={{ q }}&role={{ role }}&status={{ status_filter }}&page={{ page - 1 }}">« Trước</a>
+      {% endif %}
+      <span style="font-size:12.5px;color:var(--text-muted);padding:4px 8px">Trang {{ page }} / {{ total_pages }}</span>
+      {% if page < total_pages %}
+      <a class="btn btn-outline" style="padding:4px 10px;font-size:12.5px" href="/admin/users?q={{ q }}&role={{ role }}&status={{ status_filter }}&page={{ page + 1 }}">Sau »</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}SMM Panel{% endblock %}</title>
+    <link rel="icon" href="/static/gentelella/images/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/gentelella/css/main-v4.css">
+    <link rel="stylesheet" href="/static/gentelella/css/panel-extra.css">
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var theme = stored || (prefersDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) { /* private mode */ }
+        })();
+    </script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body{% block body_attrs %}{% endblock %}>
+{% block content %}{% endblock %}
+<script src="/static/gentelella/js/panel.js"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

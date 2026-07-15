@@ -1,0 +1,97 @@
+{% extends "layout_app.html" %}
+{% block title %}{{ "Thêm người dùng" if mode == "create" else "Sửa người dùng" }} - SMM Panel{% endblock %}
+{% block page_pretitle %}Quản trị > Người dùng{% endblock %}
+{% block page_title %}{{ "Thêm người dùng" if mode == "create" else "Sửa: " + target.username }}{% endblock %}
+{% block page_actions %}
+<a href="/admin/users" class="btn btn-outline">← Quay lại danh sách</a>
+{% endblock %}
+
+{% block page_content %}
+
+{% if error %}
+<div class="form-alert">{{ error }}</div>
+{% endif %}
+
+<div class="row col-8-4">
+  <div class="card">
+    <div class="card-header">{{ "Thông tin tài khoản mới" if mode == "create" else "Thông tin tài khoản" }}</div>
+    <div class="card-body">
+      <form method="post" action="{{ '/admin/users/new' if mode == 'create' else '/admin/users/' + target.id|string + '/edit' }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        {% if mode == "create" %}
+        <div class="form-group">
+          <label class="form-label" for="username">Tên đăng nhập</label>
+          <input type="text" id="username" name="username" class="form-control" required minlength="3" maxlength="50"
+                 pattern="[a-zA-Z0-9_.-]+" value="{{ form_username|default('') }}" autofocus>
+        </div>
+        {% else %}
+        <div class="form-group">
+          <label class="form-label">Tên đăng nhập</label>
+          <input type="text" class="form-control" value="{{ target.username }}" disabled>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <input type="email" id="email" name="email" class="form-control" required
+                 value="{{ form_email if mode == 'create' else target.email }}">
+        </div>
+
+        {% if mode == "create" %}
+        <div class="form-group">
+          <label class="form-label" for="password">Mật khẩu</label>
+          <input type="password" id="password" name="password" class="form-control" required minlength="8" maxlength="128">
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label class="form-label" for="role">Vai trò</label>
+          <select id="role" name="role" class="form-control">
+            {% for r in roles %}
+            <option value="{{ r.value }}"
+              {% if mode == "create" and form_role|default("client") == r.value %} selected{% endif %}
+              {% if mode == "edit" and target.role.value == r.value %} selected{% endif %}>
+              {{ r.value }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {% if mode == "edit" %}
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" name="is_active" value="true" {% if target.is_active %}checked{% endif %}>
+            Tài khoản đang hoạt động
+          </label>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary">
+          {{ "Tạo người dùng" if mode == "create" else "Lưu thay đổi" }}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {% if mode == "edit" %}
+  <div class="card">
+    <div class="card-header">Đặt lại mật khẩu</div>
+    <div class="card-body">
+      <form method="post" action="/admin/users/{{ target.id }}/reset-password">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="form-group">
+          <label class="form-label" for="new_password">Mật khẩu mới</label>
+          <input type="password" id="new_password" name="new_password" class="form-control" required minlength="8" maxlength="128">
+        </div>
+        <button type="submit" class="btn btn-outline" style="width:100%;justify-content:center">Đặt lại mật khẩu</button>
+      </form>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:12px;margin-bottom:0">
+        Người dùng sẽ cần đăng nhập lại bằng mật khẩu mới này.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

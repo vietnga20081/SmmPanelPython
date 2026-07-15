@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập - SMM Panel{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="brand-icon">S</div>
+            <div class="brand-name">SMM Panel</div>
+        </div>
+
+        <div class="auth-title">Chào mừng trở lại</div>
+        <div class="auth-subtitle">Đăng nhập để vào trang quản trị.</div>
+
+        {% if error %}
+        <div class="form-alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/login" data-reset-on-submit="false">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-group">
+                <label class="form-label" for="username">Tên đăng nhập</label>
+                <div class="input-group">
+                    <svg class="input-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="admin" required minlength="3" maxlength="50" autofocus>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Mật khẩu</label>
+                <div class="input-group">
+                    <svg class="input-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required minlength="8" maxlength="128">
+                </div>
+            </div>
+
+            <div class="auth-actions">
+                <label class="form-check">
+                    <input type="checkbox" name="remember_me" value="true"> Ghi nhớ đăng nhập
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;height:38px">
+                Đăng nhập
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

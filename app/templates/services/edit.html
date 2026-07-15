@@ -1,0 +1,130 @@
+{% extends "layout_app.html" %}
+{% block title %}Sửa dịch vụ - SMM Panel{% endblock %}
+{% block page_pretitle %}Quản trị > Dịch vụ{% endblock %}
+{% block page_title %}Sửa: {{ target.name }}{% endblock %}
+{% block page_actions %}
+<a href="/admin/services" class="btn btn-outline">← Quay lại danh sách</a>
+{% endblock %}
+
+{% block page_content %}
+
+{% if error %}
+<div class="form-alert">{{ error }}</div>
+{% endif %}
+
+<div class="row col-8-4">
+  <div class="card">
+    <div class="card-header">Thông tin bán hàng</div>
+    <div class="card-body">
+      <form method="post" action="/admin/services/{{ target.id }}/edit">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="form-group">
+          <label class="form-label" for="name">Tên hiển thị</label>
+          <input type="text" id="name" name="name" class="form-control" required minlength="2" maxlength="300"
+                 value="{{ target.name }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="platform_id">
+            Platform {% if target.platform_locked %}<span class="badge" style="font-size:10px;background:var(--yellow-lt);color:var(--yellow)">Đã khóa tự động phân loại</span>{% endif %}
+          </label>
+          <select id="platform_id" name="platform_id" class="form-control">
+            {% for p in platforms %}
+            <option value="{{ p.id }}"{% if target.platform_id == p.id %} selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="category_id">
+            Category {% if target.category_locked %}<span class="badge" style="font-size:10px;background:var(--yellow-lt);color:var(--yellow)">Đã khóa tự động phân loại</span>{% endif %}
+          </label>
+          <select id="category_id" name="category_id" class="form-control">
+            {% for c in categories %}
+            <option value="{{ c.id }}" data-platform-id="{{ c.platform_id }}"{% if target.category_id == c.id %} selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">
+            Đổi Platform/Category thủ công sẽ khóa dịch vụ này khỏi việc phân loại lại tự động ở lần đồng bộ sau.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="sell_price">Giá bán (đ / 1000)</label>
+          <input type="number" id="sell_price" name="sell_price" class="form-control" required min="0" step="1"
+                 value="{{ target.sell_price }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" name="is_active" value="true" {% if target.is_active %}checked{% endif %}>
+            Đang bán (hiển thị cho client đặt hàng)
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Dữ liệu gốc từ provider</div>
+    <div class="card-body" style="font-size:13px">
+      <div style="display:grid;grid-template-columns:110px 1fr;row-gap:10px">
+        <div style="color:var(--text-muted)">Provider ID</div>
+        <div>#{{ target.provider_service_ref }}</div>
+        <div style="color:var(--text-muted)">Tên gốc</div>
+        <div>{{ target.raw_provider_name }}</div>
+        <div style="color:var(--text-muted)">Category gốc</div>
+        <div>{{ target.raw_provider_category or "—" }}</div>
+        <div style="color:var(--text-muted)">Giá nhập</div>
+        <div>{{ "{:,.2f}".format(target.provider_rate) }}</div>
+        <div style="color:var(--text-muted)">Min / Max</div>
+        <div>{{ target.min_quantity }} / {{ target.max_quantity }}</div>
+        <div style="color:var(--text-muted)">Refill</div>
+        <div>{{ "Có" if target.supports_refill else "Không" }}</div>
+        <div style="color:var(--text-muted)">Cancel</div>
+        <div>{{ "Có" if target.supports_cancel else "Không" }}</div>
+        <div style="color:var(--text-muted)">Drip-feed</div>
+        <div>{{ "Có" if target.supports_dripfeed else "Không" }}</div>
+        <div style="color:var(--text-muted)">Đồng bộ lần cuối</div>
+        <div>{{ target.last_synced_at.strftime("%d/%m/%Y %H:%M") if target.last_synced_at else "—" }}</div>
+      </div>
+      {% if target.description %}
+      <hr style="border-color:var(--border-color-light);margin:16px 0">
+      <div style="color:var(--text-muted);margin-bottom:4px">Mô tả gốc</div>
+      <div style="white-space:pre-wrap;font-size:12.5px">{{ target.description }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    var platformSelect = document.getElementById("platform_id");
+    var categorySelect = document.getElementById("category_id");
+    if (!platformSelect || !categorySelect) return;
+
+    var allOptions = Array.prototype.slice.call(categorySelect.options);
+
+    function filterCategories() {
+      var platformId = platformSelect.value;
+      allOptions.forEach(function (opt) {
+        opt.hidden = opt.dataset.platformId !== platformId;
+      });
+      var current = categorySelect.selectedOptions[0];
+      if (!current || current.hidden) {
+        var firstVisible = allOptions.filter(function (opt) { return !opt.hidden; })[0];
+        if (firstVisible) categorySelect.value = firstVisible.value;
+      }
+    }
+
+    platformSelect.addEventListener("change", filterCategories);
+    filterCategories();
+  })();
+</script>
+{% endblock %}

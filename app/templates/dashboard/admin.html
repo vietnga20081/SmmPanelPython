@@ -1,0 +1,119 @@
+{% extends "layout_app.html" %}
+{% block title %}Dashboard - SMM Panel{% endblock %}
+{% block page_pretitle %}Tổng quan{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block page_content %}
+
+<div class="row col-4" style="margin-bottom:16px">
+  <div class="card">
+    <div class="stat">
+      <div class="stat-icon teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Tổng người dùng</div>
+        <div class="stat-value-row"><span class="stat-value">{{ stats.total_users }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stat">
+      <div class="stat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l3 3 7-7"/></svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Đang hoạt động</div>
+        <div class="stat-value-row"><span class="stat-value">{{ stats.active_users }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stat">
+      <div class="stat-icon red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Bị vô hiệu hóa</div>
+        <div class="stat-value-row"><span class="stat-value">{{ stats.inactive_users }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stat">
+      <div class="stat-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1l3 6 6 .9-4.5 4.4 1 6.7L12 16l-5.5 3 1-6.7L3 7.9 9 7z"/></svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Mới trong 7 ngày</div>
+        <div class="stat-value-row"><span class="stat-value">{{ stats.new_users_last_7_days }}</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row col-3" style="margin-bottom:16px">
+  <div class="card">
+    <div class="card-body">
+      <div class="stat-label">Admin</div>
+      <div class="stat-value" style="margin-top:6px">{{ stats.total_admins }}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="stat-label">Staff</div>
+      <div class="stat-value" style="margin-top:6px">{{ stats.total_staff }}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="stat-label">Client</div>
+      <div class="stat-value" style="margin-top:6px">{{ stats.total_clients }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Người dùng đăng ký gần đây</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tên đăng nhập</th>
+            <th>Vai trò</th>
+            <th>Trạng thái</th>
+            <th>Ngày tạo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in stats.recent_users %}
+          <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.username }}</td>
+            <td><span class="badge badge-blue">{{ u.role.value }}</span></td>
+            <td>
+              {% if u.is_active %}
+              <span class="status status-green">Hoạt động</span>
+              {% else %}
+              <span class="status status-red">Vô hiệu hóa</span>
+              {% endif %}
+            </td>
+            <td style="color:var(--text-muted);font-size:12.5px">{{ u.created_at.strftime("%d/%m/%Y %H:%M") }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">Chưa có người dùng nào.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

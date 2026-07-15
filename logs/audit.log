@@ -1,0 +1,4 @@
+{"time": "2026-07-15T09:03:02", "level": "INFO", "logger": "audit", "message": "services_synced provider_id=1 created=1656 updated=0 failed=0"}
+{"time": "2026-07-15T09:34:53", "level": "INFO", "logger": "audit", "message": "provider_updated id=1 name=kingsmm markup=25.0"}
+{"time": "2026-07-15T09:34:59", "level": "INFO", "logger": "audit", "message": "provider_test_ok id=1 balance=22419.21"}
+{"time": "2026-07-15T09:35:12", "level": "INFO", "logger": "audit", "message": "services_synced provider_id=1 created=0 updated=1655 failed=0"}

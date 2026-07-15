@@ -1,0 +1,87 @@
+/* Bổ sung nhỏ cho main-v4.css: dropdown avatar đơn giản (không cần JS định vị
+   động như menu-popover gốc của Gentelella), và vài helper layout dùng inline
+   style không phủ hết. */
+
+.simple-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.simple-dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 220px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 6px;
+  z-index: 60;
+}
+
+.simple-dropdown-menu.open {
+  display: block;
+}
+
+.simple-dropdown-header {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.simple-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.simple-dropdown-item:hover {
+  background: var(--bg-surface-secondary);
+}
+
+.simple-dropdown-item.danger {
+  color: var(--red);
+}
+
+.simple-dropdown-divider {
+  height: 1px;
+  background: var(--border-color-light);
+  margin: 6px 4px;
+}
+
+/* Form error alert (dùng ở trang login/form khi validate thất bại) */
+.form-alert {
+  background: var(--red-lt);
+  color: var(--red);
+  border: 1px solid var(--red);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.form-alert.success {
+  background: var(--green-lt);
+  color: var(--green);
+  border-color: var(--green);
+}
+
+/* Badge nhỏ dùng cho menu "Sắp ra mắt" trong sidebar */
+.nav-link.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.nav-link.is-disabled:hover {
+  background: none;
+}

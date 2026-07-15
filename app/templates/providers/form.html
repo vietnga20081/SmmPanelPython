@@ -1,0 +1,92 @@
+{% extends "layout_app.html" %}
+{% block title %}{{ "Thêm provider" if mode == "create" else "Sửa provider" }} - SMM Panel{% endblock %}
+{% block page_pretitle %}Quản trị > Nhà cung cấp{% endblock %}
+{% block page_title %}{{ "Thêm provider" if mode == "create" else "Sửa: " + provider.name }}{% endblock %}
+{% block page_actions %}
+<a href="/admin/providers" class="btn btn-outline">← Quay lại danh sách</a>
+{% endblock %}
+
+{% block page_content %}
+
+{% if error %}
+<div class="form-alert">{{ error }}</div>
+{% endif %}
+
+<div class="row col-8-4">
+  <div class="card">
+    <div class="card-header">Thông tin kết nối</div>
+    <div class="card-body">
+      <form method="post" action="{{ '/admin/providers/new' if mode == 'create' else '/admin/providers/' + provider.id|string + '/edit' }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="form-group">
+          <label class="form-label" for="name">Tên provider</label>
+          <input type="text" id="name" name="name" class="form-control" required minlength="2" maxlength="100"
+                 placeholder="VD: KingSmm.vn"
+                 value="{{ form_name if mode == 'create' else provider.name }}" autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="driver">Driver (chuẩn API)</label>
+          <select id="driver" name="driver" class="form-control">
+            {% for key, label in drivers.items() %}
+            <option value="{{ key }}"
+              {% if mode == "create" and form_driver|default("") == key %} selected{% endif %}
+              {% if mode == "edit" and provider.driver == key %} selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="api_url">API URL</label>
+          <input type="text" id="api_url" name="api_url" class="form-control" required
+                 placeholder="https://kingsmm.vn/api/v2"
+                 value="{{ form_api_url if mode == 'create' else provider.api_url }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="api_key">API Key</label>
+          <input type="text" id="api_key" name="api_key" class="form-control" required minlength="4" maxlength="255"
+                 placeholder="{{ 'Nhập API key' if mode == 'create' else 'Để trống nếu không đổi… (đang lưu key hiện tại, nhập lại nếu muốn thay)' }}"
+                 {% if mode == "edit" %}value="{{ provider.api_key }}"{% endif %}>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="markup_percent">Markup mặc định (%)</label>
+          <input type="number" id="markup_percent" name="markup_percent" class="form-control" required min="0" max="1000" step="0.1"
+                 value="{{ form_markup_percent if mode == 'create' else provider.markup_percent }}">
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">
+            Giá bán khi đồng bộ = giá nhập × (1 + markup / 100). Chỉ áp dụng cho dịch vụ chưa bị khóa giá thủ công.
+          </div>
+        </div>
+
+        {% if mode == "edit" %}
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" name="is_active" value="true" {% if provider.is_active %}checked{% endif %}>
+            Provider đang hoạt động
+          </label>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary">
+          {{ "Kết nối provider" if mode == "create" else "Lưu thay đổi" }}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Ghi chú</div>
+    <div class="card-body" style="font-size:13px;color:var(--text-muted);line-height:1.6">
+      <p>API key được lưu trực tiếp trong database để hệ thống có thể gọi API
+      thay bạn — hãy đảm bảo chỉ admin mới truy cập được server.</p>
+      <p>Sau khi lưu, dùng nút <strong>Test</strong> ở trang danh sách để kiểm
+      tra kết nối (gọi action <code>balance</code> của provider).</p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

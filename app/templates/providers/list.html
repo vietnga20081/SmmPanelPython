@@ -1,0 +1,93 @@
+{% extends "layout_app.html" %}
+{% block title %}Nhà cung cấp - SMM Panel{% endblock %}
+{% block page_pretitle %}Quản trị{% endblock %}
+{% block page_title %}Nhà cung cấp{% endblock %}
+{% block page_actions %}
+<a href="/admin/providers/new" class="btn btn-primary">+ Thêm provider</a>
+{% endblock %}
+
+{% block page_content %}
+
+{% if error %}
+<div class="form-alert">{{ error }}</div>
+{% endif %}
+{% if info %}
+<div class="form-alert success">{{ info }}</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Driver</th>
+            <th>Markup</th>
+            <th>Trạng thái</th>
+            <th>Số dư (lần kiểm tra gần nhất)</th>
+            <th>Kiểm tra lần cuối</th>
+            <th data-orderable="false"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in providers %}
+          <tr>
+            <td>
+              <div class="cell-strong">{{ p.name }}</div>
+              <div style="font-size:11.5px;color:var(--text-muted);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.api_url }}</div>
+            </td>
+            <td><span class="badge badge-blue">{{ p.driver }}</span></td>
+            <td>{{ p.markup_percent|round(1) }}%</td>
+            <td>
+              {% if p.is_active %}
+              <span class="status status-green">Hoạt động</span>
+              {% else %}
+              <span class="status status-red">Vô hiệu hóa</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if p.cached_balance is not none %}
+              {{ "{:,.2f}".format(p.cached_balance) }} {{ p.cached_currency }}
+              {% elif p.last_error %}
+              <span style="color:var(--red);font-size:12px">{{ p.last_error }}</span>
+              {% else %}
+              <span style="color:var(--text-muted)">Chưa kiểm tra</span>
+              {% endif %}
+            </td>
+            <td style="font-size:12.5px;color:var(--text-muted)">
+              {{ p.last_checked_at.strftime("%d/%m/%Y %H:%M") if p.last_checked_at else "—" }}
+            </td>
+            <td style="white-space:nowrap">
+              <form method="post" action="/admin/providers/{{ p.id }}/test" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
+                <button type="submit" class="btn btn-outline" style="padding:4px 10px;font-size:12.5px">Test</button>
+              </form>
+              <a href="/admin/providers/{{ p.id }}/edit" class="btn btn-outline" style="padding:4px 10px;font-size:12.5px">Sửa</a>
+              <form method="post" action="/admin/providers/{{ p.id }}/toggle-active" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
+                <button type="submit" class="btn btn-outline" style="padding:4px 10px;font-size:12.5px">
+                  {{ "Khóa" if p.is_active else "Mở khóa" }}
+                </button>
+              </form>
+              <form method="post" action="/admin/providers/{{ p.id }}/delete" style="display:inline"
+                    onsubmit="return confirm('Xóa provider {{ p.name }}? Hành động này không thể hoàn tác.');">
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
+                <button type="submit" class="btn btn-outline" style="padding:4px 10px;font-size:12.5px;color:var(--red);border-color:var(--red)">Xóa</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">
+              Chưa có provider nào. Bấm "+ Thêm provider" để kết nối provider đầu tiên.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
